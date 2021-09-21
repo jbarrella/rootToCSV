@@ -72,6 +72,9 @@ void trackletsToCsv(string outfile = "tracklets.csv")
 
             double padWidth = padPlane->getWidthIPad();
 
+            float pad = padPlane->getPad(uncal_y, 0);
+            float calPad = padPlane->getPad(y, 0);
+
             // 3 cm
             float xCathode = geo->cdrHght();
             // 3.35
@@ -90,8 +93,8 @@ void trackletsToCsv(string outfile = "tracklets.csv")
             double calibratedDy = rawDy - lorentzCorrection;
 
             trackletsOut << column << ";" << detector << ";" << hcid << ";" << padrow << ";" << position
-                         << ";" << slopeSigned * GRANULARITYTRKLSLOPE << ";" << uncal_dy << ";" << uncal_y << ";" << calibratedDy << ";" << x
-                         << ";" << y << ";" << z << endl;
+                         << ";" << slopeSigned * GRANULARITYTRKLSLOPE << ";" << uncal_dy << ";" << pad << ";" << calibratedDy << ";" << x
+                         << ";" << calPad << ";" << z << endl;
         }
     }
 }
