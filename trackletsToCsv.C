@@ -4,18 +4,19 @@ void trackletsToCsv(string outfile = "tracklets.csv")
 {
     ofstream trackletsOut(outfile);
 
-    TFile *fTracklets = TFile::Open("trdtracklets.root");
+    TFile *fTracklets = TFile::Open("../data/trdtracklets.root");
     TTree *trkltTree = (TTree *)fTracklets->Get("o2sim");
     vector<o2::trd::Tracklet64> *tracklets = nullptr;
     trkltTree->SetBranchAddress("Tracklet", &tracklets);
 
-    TFile *fCTracklets = TFile::Open("trdcalibratedtracklets.root");
+    TFile *fCTracklets = TFile::Open("../data/trdcalibratedtracklets.root");
     TTree *cTrkltTree = (TTree *)fCTracklets->Get("ctracklets");
     vector<o2::trd::CalibratedTracklet> *cTracklets = nullptr;
     cTrkltTree->SetBranchAddress("CTracklets", &cTracklets);
 
     auto &ccdbmgr = o2::ccdb::BasicCCDBManager::instance();
     // all o2-sims use values from this run
+    ccdbmgr.setURL("http://ccdb-test.cern.ch:8080/");
     ccdbmgr.setTimestamp(297595);
     auto calibrations = ccdbmgr.get<o2::trd::ChamberCalibrations>("TRD_test/ChamberCalibrations");
 
@@ -39,19 +40,19 @@ void trackletsToCsv(string outfile = "tracklets.csv")
             int column = tracklet.getColumn();
             float position = tracklet.getPosition();
 
-            int slope = tracklet.getSlope();
-            int slopeSigned = 0;
-            int NBITSTRKLSLOPE = 8;
-            float PADGRANULARITYTRKLSLOPE = 1000.f;
+            int slope = tracklet.getSlopeBinSigned();
+            // int slopeSigned = 0;
+            // int NBITSTRKLSLOPE = 8;
+            float PADGRANULARITYTRKLSLOPE = 128.f;
             float GRANULARITYTRKLSLOPE = 1.f / PADGRANULARITYTRKLSLOPE;
-            if (slope & (1 << (NBITSTRKLSLOPE - 1)))
-            {
-                slopeSigned = -((~(slope - 1)) & ((1 << NBITSTRKLSLOPE) - 1));
-            }
-            else
-            {
-                slopeSigned = slope & ((1 << NBITSTRKLSLOPE) - 1);
-            }
+            // if (slope & (1 << (NBITSTRKLSLOPE - 1)))
+            // {
+            //     slopeSigned = -((~(slope - 1)) & ((1 << NBITSTRKLSLOPE) - 1));
+            // }
+            // else
+            // {
+            //     slopeSigned = slope & ((1 << NBITSTRKLSLOPE) - 1);
+            // }
 
             float uncal_y = tracklet.getUncalibratedY();
             float uncal_dy = tracklet.getUncalibratedDy();
@@ -82,7 +83,7 @@ void trackletsToCsv(string outfile = "tracklets.csv")
 
             // dy = slope * nTimeBins * padWidth * GRANULARITYTRKLSLOPE;
             // nTimeBins should be number of timebins in drift region. 1 timebin is 100 nanosecond
-            double rawDy = slopeSigned * ((xCathode / vdrift) * 10.) * padWidth * GRANULARITYTRKLSLOPE;
+            double rawDy = slope * ((xCathode / vdrift) * 10.) * padWidth * GRANULARITYTRKLSLOPE;
 
             // NOTE: check what drift height is used in calibration code to ensure consistency
             // NOTE: check sign convention of Lorentz angle
@@ -93,8 +94,8 @@ void trackletsToCsv(string outfile = "tracklets.csv")
             double calibratedDy = rawDy - lorentzCorrection;
 
             trackletsOut << column << ";" << detector << ";" << hcid << ";" << padrow << ";" << position
-                         << ";" << slopeSigned * GRANULARITYTRKLSLOPE << ";" << uncal_dy << ";" << pad << ";" << calibratedDy << ";" << x
-                         << ";" << calPad << ";" << z << endl;
+                         << ";" << slope << ";" << uncal_dy << ";" << pad << ";" << calibratedDy << ";" << x
+                         << ";" << pad << ";" << z << endl;
         }
     }
 }

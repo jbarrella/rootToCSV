@@ -1,7 +1,7 @@
 import ROOT
 import pandas as pd
 
-F_IN = 'trddigits.root'
+F_IN = '../data/trddigits.root'
 F_OUT = 'digits_sorted_single_event.csv'
 
 def convert_digits():
